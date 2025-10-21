@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Printer, Eye } from "lucide-react";
+import { Printer, Eye, Download } from "lucide-react";
+import jsPDF from "jspdf";
 import { toast } from "sonner";
 
 interface CardGeneratorProps {
@@ -41,6 +42,67 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = () => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const cardWidth = pageWidth - 2 * margin;
+      const cellSize = cardWidth / gridSize;
+      
+      generatedCards.forEach((card, cardIndex) => {
+        if (cardIndex > 0) {
+          doc.addPage();
+        }
+
+        // Title
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Bingo Card #${cardIndex + 1}`, pageWidth / 2, margin, { align: "center" });
+
+        // Grid
+        const startY = margin + 10;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+
+        for (let row = 0; row < gridSize; row++) {
+          for (let col = 0; col < gridSize; col++) {
+            const x = margin + col * cellSize;
+            const y = startY + row * cellSize;
+            const word = card[row * gridSize + col];
+
+            // Cell border
+            doc.rect(x, y, cellSize, cellSize);
+
+            // Word text (centered and wrapped if needed)
+            doc.setFontSize(gridSize === 3 ? 11 : gridSize === 4 ? 9 : 7);
+            const lines = doc.splitTextToSize(word, cellSize - 4);
+            const textHeight = lines.length * 4;
+            const textY = y + cellSize / 2 - textHeight / 2 + 4;
+            
+            doc.text(lines, x + cellSize / 2, textY, { 
+              align: "center",
+              maxWidth: cellSize - 4
+            });
+          }
+        }
+
+        // Footer with cut line
+        const footerY = startY + cardWidth + 5;
+        doc.setFontSize(8);
+        doc.line(margin, footerY, pageWidth - margin, footerY);
+        doc.text("✂ Cut along this line ✂", pageWidth / 2, footerY + 4, { align: "center" });
+      });
+
+      doc.save(`bingo-cards-${gridSize}x${gridSize}.pdf`);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to generate PDF. Please try again.");
+      console.error(error);
+    }
   };
 
   if (showPreview && generatedCards.length > 0) {
@@ -83,7 +145,7 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
               </p>
             </div>
 
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
               <Button onClick={onBack} variant="outline" size="lg">
                 Back to Edit
               </Button>
@@ -102,6 +164,15 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
               >
                 <Printer className="w-4 h-4" />
                 Print All Cards
+              </Button>
+              <Button 
+                onClick={handleDownloadPDF} 
+                variant="secondary" 
+                size="lg"
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download as PDF
               </Button>
             </div>
           </div>
