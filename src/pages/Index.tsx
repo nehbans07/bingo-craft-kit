@@ -6,21 +6,26 @@ import CardGenerator from "@/components/CardGenerator";
 
 type Step = "intro" | "grid" | "words" | "generate";
 
+export interface GridSize {
+  rows: number;
+  cols: number;
+}
+
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<Step>("intro");
-  const [gridSize, setGridSize] = useState<number>(0);
+  const [gridSize, setGridSize] = useState<GridSize>({ rows: 0, cols: 0 });
   const [words, setWords] = useState<string[]>([]);
 
   const handleStart = () => setCurrentStep("grid");
   
-  const handleGridSelect = (size: number) => setGridSize(size);
+  const handleGridSelect = (size: GridSize) => setGridSize(size);
   
   const handleGridNext = () => {
-    if (gridSize > 0) setCurrentStep("words");
+    if (gridSize.rows > 0 && gridSize.cols > 0) setCurrentStep("words");
   };
   
   const handleWordsNext = () => {
-    if (words.length === gridSize * gridSize) setCurrentStep("generate");
+    if (words.length === gridSize.rows * gridSize.cols) setCurrentStep("generate");
   };
 
   const renderStep = () => {

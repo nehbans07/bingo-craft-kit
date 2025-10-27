@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Printer, Eye, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
+import { GridSize } from "@/pages/Index";
 
 interface CardGeneratorProps {
-  gridSize: number;
+  gridSize: GridSize;
   words: string[];
   onBack: () => void;
 }
@@ -51,7 +52,8 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 15;
       const cardWidth = pageWidth - 2 * margin;
-      const cellSize = cardWidth / gridSize;
+      const cellWidth = cardWidth / gridSize.cols;
+      const cellHeight = cellWidth; // Keep cells square
       
       generatedCards.forEach((card, cardIndex) => {
         if (cardIndex > 0) {
@@ -68,36 +70,37 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
 
-        for (let row = 0; row < gridSize; row++) {
-          for (let col = 0; col < gridSize; col++) {
-            const x = margin + col * cellSize;
-            const y = startY + row * cellSize;
-            const word = card[row * gridSize + col];
+        for (let row = 0; row < gridSize.rows; row++) {
+          for (let col = 0; col < gridSize.cols; col++) {
+            const x = margin + col * cellWidth;
+            const y = startY + row * cellHeight;
+            const word = card[row * gridSize.cols + col];
 
             // Cell border
-            doc.rect(x, y, cellSize, cellSize);
+            doc.rect(x, y, cellWidth, cellHeight);
 
             // Word text (centered and wrapped if needed)
-            doc.setFontSize(gridSize === 3 ? 11 : gridSize === 4 ? 9 : 7);
-            const lines = doc.splitTextToSize(word, cellSize - 4);
-            const textHeight = lines.length * 4;
-            const textY = y + cellSize / 2 - textHeight / 2 + 4;
+            const fontSize = Math.max(7, Math.min(11, 60 / Math.max(gridSize.rows, gridSize.cols)));
+            doc.setFontSize(fontSize);
+            const lines = doc.splitTextToSize(word, cellWidth - 4);
+            const textHeight = lines.length * (fontSize / 2);
+            const textY = y + cellHeight / 2 - textHeight / 2 + (fontSize / 2);
             
-            doc.text(lines, x + cellSize / 2, textY, { 
+            doc.text(lines, x + cellWidth / 2, textY, { 
               align: "center",
-              maxWidth: cellSize - 4
+              maxWidth: cellWidth - 4
             });
           }
         }
 
         // Footer with cut line
-        const footerY = startY + cardWidth + 5;
+        const footerY = startY + (gridSize.rows * cellHeight) + 5;
         doc.setFontSize(8);
         doc.line(margin, footerY, pageWidth - margin, footerY);
         doc.text("✂ Cut along this line ✂", pageWidth / 2, footerY + 4, { align: "center" });
       });
 
-      doc.save(`bingo-cards-${gridSize}x${gridSize}.pdf`);
+      doc.save(`bingo-cards-${gridSize.rows}x${gridSize.cols}.pdf`);
       toast.success("PDF downloaded successfully!");
     } catch (error) {
       toast.error("Failed to generate PDF. Please try again.");
@@ -199,7 +202,7 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
                     <div
                       className="grid gap-1 mx-auto border-2 border-gray-900"
                       style={{
-                        gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                        gridTemplateColumns: `repeat(${gridSize.cols}, minmax(0, 1fr))`,
                         maxWidth: "500px",
                       }}
                     >
@@ -208,8 +211,8 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
                           key={i}
                           className="border border-gray-900 p-3 flex items-center justify-center text-center text-sm font-medium bg-white"
                           style={{
-                            minHeight: gridSize === 3 ? "70px" : gridSize === 4 ? "60px" : "50px",
-                            fontSize: gridSize === 3 ? "14px" : gridSize === 4 ? "12px" : "10px",
+                            minHeight: `${Math.max(40, 300 / Math.max(gridSize.rows, gridSize.cols))}px`,
+                            fontSize: `${Math.max(9, 60 / Math.max(gridSize.rows, gridSize.cols))}px`,
                           }}
                         >
                           {word}
@@ -233,7 +236,7 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
                     <div
                       className="grid gap-1 mx-auto border-2 border-gray-900"
                       style={{
-                        gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                        gridTemplateColumns: `repeat(${gridSize.cols}, minmax(0, 1fr))`,
                         maxWidth: "500px",
                       }}
                     >
@@ -242,8 +245,8 @@ const CardGenerator = ({ gridSize, words, onBack }: CardGeneratorProps) => {
                           key={i}
                           className="border border-gray-900 p-3 flex items-center justify-center text-center text-sm font-medium bg-white"
                           style={{
-                            minHeight: gridSize === 3 ? "70px" : gridSize === 4 ? "60px" : "50px",
-                            fontSize: gridSize === 3 ? "14px" : gridSize === 4 ? "12px" : "10px",
+                            minHeight: `${Math.max(40, 300 / Math.max(gridSize.rows, gridSize.cols))}px`,
+                            fontSize: `${Math.max(9, 60 / Math.max(gridSize.rows, gridSize.cols))}px`,
                           }}
                         >
                           {word}

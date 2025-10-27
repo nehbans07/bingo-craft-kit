@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { GridSize } from "@/pages/Index";
 
 interface WordInputProps {
-  gridSize: number;
+  gridSize: GridSize;
   words: string[];
   onWordsChange: (words: string[]) => void;
   onNext: () => void;
@@ -13,7 +14,7 @@ interface WordInputProps {
 
 const WordInput = ({ gridSize, words, onWordsChange, onNext, onBack }: WordInputProps) => {
   const [inputValue, setInputValue] = useState(words.join("\n"));
-  const requiredWords = gridSize * gridSize;
+  const requiredWords = gridSize.rows * gridSize.cols;
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
@@ -55,7 +56,7 @@ const WordInput = ({ gridSize, words, onWordsChange, onNext, onBack }: WordInput
               </span>
             </div>
             <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
-              {gridSize}×{gridSize} Grid
+              {gridSize.rows}×{gridSize.cols} Grid
             </span>
           </div>
 
